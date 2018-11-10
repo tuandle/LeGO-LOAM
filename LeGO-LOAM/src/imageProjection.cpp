@@ -31,6 +31,7 @@
 class ImageProjection {
  private:
   ros::NodeHandle nh;
+  image_transport::ImageTransport it_;
 
   ros::Subscriber subLaserCloud;
 
@@ -42,6 +43,7 @@ class ImageProjection {
   ros::Publisher pubSegmentedCloudPure;
   ros::Publisher pubSegmentedCloudInfo;
   ros::Publisher pubOutlierCloud;
+  image_transport::Publisher pubProjectedCloud;
 
   pcl::PointCloud<PointType>::Ptr laserCloudIn;
 
@@ -74,10 +76,13 @@ class ImageProjection {
   uint16_t *queueIndX;
   uint16_t *queueIndY;
 
+  std::string cloud_topic;
+
  public:
-  ImageProjection() : nh("~") {
+  ImageProjection() : nh("~"), it_(nh) {
+    nh.param<std::string>("cloud_topic", cloud_topic, "/velodyne_points");
     subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>(
-        "/velodyne_points", 1, &ImageProjection::cloudHandler, this);
+        cloud_topic, 1, &ImageProjection::cloudHandler, this);
 
     pubFullCloud =
         nh.advertise<sensor_msgs::PointCloud2>("/full_cloud_projected", 1);
@@ -93,6 +98,7 @@ class ImageProjection {
         nh.advertise<cloud_msgs::cloud_info>("/segmented_cloud_info", 1);
     pubOutlierCloud =
         nh.advertise<sensor_msgs::PointCloud2>("/outlier_cloud", 1);
+    pubProjectedCloud = it_.advertise("/projected_cloud_to_img", 1);
 
     nanPoint.x = std::numeric_limits<float>::quiet_NaN();
     nanPoint.y = std::numeric_limits<float>::quiet_NaN();
@@ -166,7 +172,50 @@ class ImageProjection {
 
   void copyPointCloud(const sensor_msgs::PointCloud2ConstPtr &laserCloudMsg) {
     cloudHeader = laserCloudMsg->header;
-    pcl::fromROSMsg(*laserCloudMsg, *laserCloudIn);
+    /*pcl::fromROSMsg(*laserCloudMsg, *laserCloudIn);*/  // VLP-16
+    /*pcl::PointCloud<PointType>::Ptr test_cloud(
+        new pcl::PointCloud<PointType>());
+    auto t0 = std::chrono::high_resolution_clock::now();
+    pcl::fromROSMsg(*laserCloudMsg, *test_cloud);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto dt =
+        1.e-9 *
+        std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
+    std::cout << "Built-in function " << dt << std::endl;*/
+    sensor_msgs::PointCloud2 cloudIn;
+    cloudIn = *laserCloudMsg;
+    int pointBytes = laserCloudMsg->point_step;
+    int offset_x;
+    int offset_y;
+    int offset_z;
+    int offset_intensity;
+    for (int f = 0; f < cloudIn.fields.size(); ++f) {
+      if (laserCloudMsg->fields[f].name == "x")
+        offset_x = laserCloudMsg->fields[f].offset;
+      if (laserCloudMsg->fields[f].name == "y")
+        offset_y = laserCloudMsg->fields[f].offset;
+      if (laserCloudMsg->fields[f].name == "z")
+        offset_z = laserCloudMsg->fields[f].offset;
+      if (laserCloudMsg->fields[f].name == "intensity")
+        offset_intensity = laserCloudMsg->fields[f].offset;
+    }
+    // populate point cloud object
+    laserCloudIn->reserve(laserCloudMsg->width);
+    /*t0 = std::chrono::high_resolution_clock::now();*/
+    for (int p = 0; p < laserCloudMsg->width; ++p) {
+      pcl::PointXYZI newPoint;
+      newPoint.x = *(float *)(&cloudIn.data[0] + (pointBytes * p) + offset_x);
+      newPoint.y = *(float *)(&cloudIn.data[0] + (pointBytes * p) + offset_y);
+      newPoint.z = *(float *)(&cloudIn.data[0] + (pointBytes * p) + offset_z);
+      newPoint.intensity =
+          *(uint16_t *)(&cloudIn.data[0] + (pointBytes * p) + offset_intensity);
+      laserCloudIn->points.push_back(newPoint);
+    }
+    /*t1 = std::chrono::high_resolution_clock::now();
+    dt = 1.e-9 *
+         std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
+    std::cout << dt << std::endl;*/
+    /*ROS_INFO("Intensity %f", laserCloudIn->points[3].intensity);*/
   }
 
   void cloudHandler(const sensor_msgs::PointCloud2ConstPtr &laserCloudMsg) {
@@ -197,9 +246,7 @@ class ImageProjection {
     float verticalAngle, horizonAngle, range;
     size_t rowIdn, columnIdn, index, cloudSize;
     PointType thisPoint;
-
     cloudSize = laserCloudIn->points.size();
-
     for (size_t i = 0; i < cloudSize; ++i) {
       thisPoint.x = laserCloudIn->points[i].x;
       thisPoint.y = laserCloudIn->points[i].y;
@@ -209,16 +256,22 @@ class ImageProjection {
                                               thisPoint.y * thisPoint.y)) *
                       180 / M_PI;
       rowIdn = (verticalAngle + ang_bottom) / ang_res_y;
+
       if (rowIdn < 0 || rowIdn >= N_SCAN) continue;
 
-      horizonAngle = atan2(thisPoint.x, thisPoint.y) * 180 / M_PI;
+      horizonAngle = atan2(thisPoint.x, thisPoint.y) * 180 / M_PI;  // VLP16
+      /*horizonAngle = atan2(thisPoint.y, thisPoint.x) * 180 / M_PI; */
 
       if (horizonAngle <= -90)
-        columnIdn = -int(horizonAngle / ang_res_x) - 450;
+        columnIdn = -int(horizonAngle / ang_res_x) - 500;  // 450
       else if (horizonAngle >= 0)
-        columnIdn = -int(horizonAngle / ang_res_x) + 1350;
+        columnIdn = -int(horizonAngle / ang_res_x) + 1500;  // 1350
       else
-        columnIdn = 1350 - int(horizonAngle / ang_res_x);
+        columnIdn = 1500 - int(horizonAngle / ang_res_x);  // 1350
+
+      /*std::cout << "Point: " << i << " vertical angle " << verticalAngle
+                << " row Idx " << rowIdn << " horizonAngle " << horizonAngle
+                << " column " << columnIdn << std::endl;*/
 
       range = sqrt(thisPoint.x * thisPoint.x + thisPoint.y * thisPoint.y +
                    thisPoint.z * thisPoint.z);
@@ -414,6 +467,15 @@ class ImageProjection {
 
     sensor_msgs::PointCloud2 laserCloudTemp;
 
+    if (pubProjectedCloud.getNumSubscribers() != 0) {
+      cv_bridge::CvImage projected_img;
+      std_msgs::Header img_header;
+      img_header.stamp = cloudHeader.stamp;
+      img_header.frame_id = "base_link";
+      projected_img = cv_bridge::CvImage(
+          img_header, sensor_msgs::image_encodings::MONO8, rangeMat);
+      pubProjectedCloud.publish(projected_img.toImageMsg());
+    }
     pcl::toROSMsg(*outlierCloud, laserCloudTemp);
     laserCloudTemp.header.stamp = cloudHeader.stamp;
     laserCloudTemp.header.frame_id = "base_link";

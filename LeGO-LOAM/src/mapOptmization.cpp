@@ -666,6 +666,7 @@ class mapOptimization {
       const sensor_msgs::PointCloud2ConstPtr& msg) {
     timeLaserCloudOutlierLast = msg->header.stamp.toSec();
     laserCloudOutlierLast->clear();
+
     pcl::fromROSMsg(*msg, *laserCloudOutlierLast);
     newLaserCloudOutlierLast = true;
   }
@@ -674,6 +675,7 @@ class mapOptimization {
       const sensor_msgs::PointCloud2ConstPtr& msg) {
     timeLaserCloudCornerLast = msg->header.stamp.toSec();
     laserCloudCornerLast->clear();
+
     pcl::fromROSMsg(*msg, *laserCloudCornerLast);
     newLaserCloudCornerLast = true;
   }
@@ -681,6 +683,7 @@ class mapOptimization {
   void laserCloudSurfLastHandler(const sensor_msgs::PointCloud2ConstPtr& msg) {
     timeLaserCloudSurfLast = msg->header.stamp.toSec();
     laserCloudSurfLast->clear();
+    
     pcl::fromROSMsg(*msg, *laserCloudSurfLast);
     newLaserCloudSurfLast = true;
   }

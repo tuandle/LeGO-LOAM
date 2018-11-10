@@ -515,6 +515,7 @@ class FeatureAssociation {
     timeNewSegmentedCloud = timeScanCur;
 
     segmentedCloud->clear();
+
     pcl::fromROSMsg(*laserCloudMsg, *segmentedCloud);
 
     newSegmentedCloud = true;
@@ -524,6 +525,7 @@ class FeatureAssociation {
     timeNewOutlierCloud = msgIn->header.stamp.toSec();
 
     outlierCloud->clear();
+
     pcl::fromROSMsg(*msgIn, *outlierCloud);
 
     newOutlierCloud = true;
@@ -866,6 +868,7 @@ class FeatureAssociation {
 
     if (pubCornerPointsSharp.getNumSubscribers() != 0) {
       pcl::toROSMsg(*cornerPointsSharp, laserCloudOutMsg);
+      
       laserCloudOutMsg.header.stamp = cloudHeader.stamp;
       laserCloudOutMsg.header.frame_id = "/camera";
       pubCornerPointsSharp.publish(laserCloudOutMsg);

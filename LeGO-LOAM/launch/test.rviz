@@ -4,11 +4,16 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Status1
+        - /base_link1
         - /Map Cloud1
         - /Map Cloud1/Autocompute Value Bounds1
         - /Path1
         - /Path2
         - /AerialMapDisplay1
+        - /PointCloud21
+        - /PointCloud22
+        - /PointCloud22/Status1
       Splitter Ratio: 0.658333361
     Tree Height: 843
   - Class: rviz/Selection
@@ -102,8 +107,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 49.4033203
-        Min Value: -82.5673981
+        Max Value: 76.6866989
+        Min Value: -95.9733124
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -144,7 +149,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0
+      Max Intensity: 79
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: Trajectory
@@ -210,14 +215,74 @@ Visualization Manager:
       Class: rviz_plugins/AerialMapDisplay
       Draw Behind: false
       Dynamically reload: true
-      Enabled: true
+      Enabled: false
       Frame Convention: XYZ -> ENU
       Name: AerialMapDisplay
       Object URI: https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoidHVhbmRsZSIsImEiOiJjamxxdHY4OHMxajRiM3FzM3FxMjQ2cXprIn0.-QY1K8W3mmlrM4ni5J3s2w
-      Robot frame: camera
+      Robot frame: aft_mapped
       Topic: /gps/navsatfix
-      Value: true
+      Value: false
       Zoom: 16
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 255
+      Min Color: 0; 0; 0
+      Min Intensity: 55
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.00999999978
+      Style: Flat Squares
+      Topic: /velodyne_points
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 0; 0
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 30.1830006
+      Min Color: 0; 0; 0
+      Min Intensity: 0.0114000002
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 1
+      Size (m): 0.00999999978
+      Style: Points
+      Topic: /ground_cloud
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -233,25 +298,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 438.050629
+      Distance: 42.1607361
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -70.0324326
-        Y: 33.5418739
-        Z: -26.5861053
+        X: 3.31735325
+        Y: 15.8338165
+        Z: -3.91661429
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.55979633
+      Pitch: 1.11979687
       Target Frame: base_link
       Value: Orbit (rviz)
-      Yaw: 1.85666156
+      Yaw: 6.18666172
     Saved: ~
 Window Geometry:
   Displays:
