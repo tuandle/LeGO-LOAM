@@ -107,6 +107,7 @@ class ImageProjection {
 
     allocateMemory();
     resetParameters();
+    ROS_INFO_ONCE("Subscribe to lidar topic: %s",cloud_topic.c_str());
   }
 
   void allocateMemory() {
@@ -263,11 +264,11 @@ class ImageProjection {
       /*horizonAngle = atan2(thisPoint.y, thisPoint.x) * 180 / M_PI; */
 
       if (horizonAngle <= -90)
-        columnIdn = -int(horizonAngle / ang_res_x) - 500;  // 450
+        columnIdn = -int(horizonAngle / ang_res_x) - 450;  // 450
       else if (horizonAngle >= 0)
-        columnIdn = -int(horizonAngle / ang_res_x) + 1500;  // 1350
+        columnIdn = -int(horizonAngle / ang_res_x) + 1350;  // 1350
       else
-        columnIdn = 1500 - int(horizonAngle / ang_res_x);  // 1350
+        columnIdn = 1350 - int(horizonAngle / ang_res_x);  // 1350
 
       /*std::cout << "Point: " << i << " vertical angle " << verticalAngle
                 << " row Idx " << rowIdn << " horizonAngle " << horizonAngle
@@ -283,6 +284,15 @@ class ImageProjection {
       fullCloud->points[index] = thisPoint;
 
       fullInfoCloud->points[index].intensity = range;
+    }
+    if (pubProjectedCloud.getNumSubscribers() != 0) {
+      cv_bridge::CvImage projected_img;
+      std_msgs::Header img_header;
+      img_header.stamp = cloudHeader.stamp;
+      img_header.frame_id = "base_link";
+      projected_img = cv_bridge::CvImage(
+          img_header, sensor_msgs::image_encodings::MONO8, rangeMat);
+      pubProjectedCloud.publish(projected_img.toImageMsg());
     }
   }
 
@@ -467,7 +477,7 @@ class ImageProjection {
 
     sensor_msgs::PointCloud2 laserCloudTemp;
 
-    if (pubProjectedCloud.getNumSubscribers() != 0) {
+    /*if (pubProjectedCloud.getNumSubscribers() != 0) {
       cv_bridge::CvImage projected_img;
       std_msgs::Header img_header;
       img_header.stamp = cloudHeader.stamp;
@@ -475,7 +485,7 @@ class ImageProjection {
       projected_img = cv_bridge::CvImage(
           img_header, sensor_msgs::image_encodings::MONO8, rangeMat);
       pubProjectedCloud.publish(projected_img.toImageMsg());
-    }
+    }*/
     pcl::toROSMsg(*outlierCloud, laserCloudTemp);
     laserCloudTemp.header.stamp = cloudHeader.stamp;
     laserCloudTemp.header.frame_id = "base_link";

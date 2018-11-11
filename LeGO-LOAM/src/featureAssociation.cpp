@@ -180,9 +180,13 @@ class FeatureAssociation {
   cv::Mat matP;
 
   int frameCount;
+  std::string imu_topic;
 
  public:
   FeatureAssociation() : nh("~") {
+    nh.param<std::string>("imu_topic", imu_topic,"/imu/data");
+    subImu = nh.subscribe<sensor_msgs::Imu>(
+        imu_topic, 50, &FeatureAssociation::imuHandler, this);
     subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>(
         "/segmented_cloud", 1, &FeatureAssociation::laserCloudHandler, this);
     subLaserCloudInfo = nh.subscribe<cloud_msgs::cloud_info>(
@@ -190,8 +194,6 @@ class FeatureAssociation {
         this);
     subOutlierCloud = nh.subscribe<sensor_msgs::PointCloud2>(
         "/outlier_cloud", 1, &FeatureAssociation::outlierCloudHandler, this);
-    subImu = nh.subscribe<sensor_msgs::Imu>(
-        imuTopic, 50, &FeatureAssociation::imuHandler, this);
 
     pubCornerPointsSharp =
         nh.advertise<sensor_msgs::PointCloud2>("/laser_cloud_sharp", 1);
@@ -212,6 +214,7 @@ class FeatureAssociation {
         nh.advertise<nav_msgs::Odometry>("/laser_odom_to_init", 5);
 
     initializationValue();
+    ROS_INFO_ONCE("Subscribe to IMU topic: %s",imu_topic.c_str());
   }
 
   void initializationValue() {

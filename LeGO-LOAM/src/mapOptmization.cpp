@@ -221,6 +221,8 @@ class mapOptimization {
   float cRoll, sRoll, cPitch, sPitch, cYaw, sYaw, tX, tY, tZ;
   float ctRoll, stRoll, ctPitch, stPitch, ctYaw, stYaw, tInX, tInY, tInZ;
 
+  std::string imu_topic;
+
  public:
   mapOptimization() : nh("~") {
     ISAM2Params parameters;
@@ -247,7 +249,8 @@ class mapOptimization {
         &mapOptimization::laserCloudOutlierLastHandler, this);
     subLaserOdometry = nh.subscribe<nav_msgs::Odometry>(
         "/laser_odom_to_init", 5, &mapOptimization::laserOdometryHandler, this);
-    subImu = nh.subscribe<sensor_msgs::Imu>(imuTopic, 50,
+    nh.param<std::string>("imu_topic", imu_topic,"/imu/data");
+    subImu = nh.subscribe<sensor_msgs::Imu>(imu_topic, 50,
                                             &mapOptimization::imuHandler, this);
 
     pubHistoryKeyFrames =
