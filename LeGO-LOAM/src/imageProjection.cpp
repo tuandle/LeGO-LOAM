@@ -107,7 +107,7 @@ class ImageProjection {
 
     allocateMemory();
     resetParameters();
-    ROS_INFO_ONCE("Subscribe to lidar topic: %s",cloud_topic.c_str());
+    ROS_INFO_ONCE("Subscribe to lidar topic: %s", cloud_topic.c_str());
   }
 
   void allocateMemory() {
@@ -174,6 +174,7 @@ class ImageProjection {
   void copyPointCloud(const sensor_msgs::PointCloud2ConstPtr &laserCloudMsg) {
     cloudHeader = laserCloudMsg->header;
     /*pcl::fromROSMsg(*laserCloudMsg, *laserCloudIn);*/  // VLP-16
+
     /*pcl::PointCloud<PointType>::Ptr test_cloud(
         new pcl::PointCloud<PointType>());
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -182,7 +183,11 @@ class ImageProjection {
     auto dt =
         1.e-9 *
         std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
-    std::cout << "Built-in function " << dt << std::endl;*/
+    std::cout << "Built-in function " << dt << std::endl;
+    ROS_INFO("Intensity built-in %f,%f,%f,%f", test_cloud->points[3].x,
+             test_cloud->points[3].y, test_cloud->points[3].z,
+             test_cloud->points[3].intensity);*/
+
     sensor_msgs::PointCloud2 cloudIn;
     cloudIn = *laserCloudMsg;
     int pointBytes = laserCloudMsg->point_step;
@@ -202,7 +207,6 @@ class ImageProjection {
     }
     // populate point cloud object
     laserCloudIn->reserve(laserCloudMsg->width);
-    /*t0 = std::chrono::high_resolution_clock::now();*/
     for (int p = 0; p < laserCloudMsg->width; ++p) {
       pcl::PointXYZI newPoint;
       newPoint.x = *(float *)(&cloudIn.data[0] + (pointBytes * p) + offset_x);
@@ -210,13 +214,9 @@ class ImageProjection {
       newPoint.z = *(float *)(&cloudIn.data[0] + (pointBytes * p) + offset_z);
       newPoint.intensity =
           *(uint16_t *)(&cloudIn.data[0] + (pointBytes * p) + offset_intensity);
-      laserCloudIn->points.push_back(newPoint);
+
+      laserCloudIn->points.emplace_back(newPoint);
     }
-    /*t1 = std::chrono::high_resolution_clock::now();
-    dt = 1.e-9 *
-         std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
-    std::cout << dt << std::endl;*/
-    /*ROS_INFO("Intensity %f", laserCloudIn->points[3].intensity);*/
   }
 
   void cloudHandler(const sensor_msgs::PointCloud2ConstPtr &laserCloudMsg) {
@@ -291,7 +291,7 @@ class ImageProjection {
       img_header.stamp = cloudHeader.stamp;
       img_header.frame_id = "base_link";
       projected_img = cv_bridge::CvImage(
-          img_header, sensor_msgs::image_encodings::MONO8, rangeMat);
+          img_header, sensor_msgs::image_encodings::TYPE_32FC1, rangeMat);
       pubProjectedCloud.publish(projected_img.toImageMsg());
     }
   }

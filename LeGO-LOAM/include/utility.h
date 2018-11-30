@@ -53,7 +53,7 @@
 
 using namespace std;
 
-typedef pcl::PointXYZI PointType;
+using PointType = pcl::PointXYZI;
 
 // VLP 32e
 /*extern const int N_SCAN = 32;

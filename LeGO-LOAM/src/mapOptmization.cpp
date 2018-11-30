@@ -36,6 +36,8 @@
 #include "utility.h"
 
 #include <pcl/io/pcd_io.h>
+#include <pcl_ros/transforms.h>
+#include <pcl_ros/point_cloud.h>
 
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/geometry/Rot3.h>
@@ -1678,8 +1680,21 @@ class mapOptimization {
 
     if (!globalMapKeyFramesDS) {
       res.success = false;
-      return true;
+      return false;
     }
+    //Rotate the map to use with localization
+    pcl::PointCloud<PointType>::Ptr rotate_map;
+    rotate_map.reset(new pcl::PointCloud<PointType>());
+    tf::Transform R_l_g;
+    tf::Vector3 v_t(0, 0, 0);
+    R_l_g.setOrigin(v_t);
+    tf::Quaternion q_rot;
+    double r = 1.57079632679, p = 0, y = 1.57079632679;
+    q_rot = tf::createQuaternionFromRPY(r, p, y);
+    R_l_g.setRotation(q_rot);
+    pcl_ros::transformPointCloud(*globalMapKeyFramesDS, *rotate_map, R_l_g);
+
+    globalMapKeyFramesDS = rotate_map;
 
     globalMapKeyFramesDS->header.stamp = ros::Time::now().toSec();
     globalMapKeyFramesDS->header.frame_id = "map";
@@ -1691,6 +1706,7 @@ class mapOptimization {
     globalMapKeyPosesDS->clear();
     globalMapKeyFrames->clear();
     globalMapKeyFramesDS->clear();
+    rotate_map->clear();
 
     return true;
   }
