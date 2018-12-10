@@ -201,12 +201,12 @@ public:
 
             horizonAngle = atan2(thisPoint.x, thisPoint.y) * 180 / M_PI;
 
-            if (horizonAngle <= -90)
-                columnIdn = -int(horizonAngle / ang_res_x) - 450; 
-            else if (horizonAngle >= 0)
-                columnIdn = -int(horizonAngle / ang_res_x) + 1350;
-            else
-                columnIdn = 1350 - int(horizonAngle / ang_res_x);
+            columnIdn = -round((horizonAngle-90.0)/ang_res_x) + Horizon_SCAN/2;
+            if (columnIdn >= Horizon_SCAN)
+                columnIdn -= Horizon_SCAN;
+
+            if (columnIdn < 0 || columnIdn >= Horizon_SCAN)
+                continue;
 
             range = sqrt(thisPoint.x * thisPoint.x + thisPoint.y * thisPoint.y + thisPoint.z * thisPoint.z);
             rangeMat.at<float>(rowIdn, columnIdn) = range;
